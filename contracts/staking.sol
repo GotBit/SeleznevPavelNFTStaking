@@ -53,8 +53,8 @@ contract Stake is IERC721Receiver {
     
 
     function _unstake(address sender, uint256 tokenId) internal {
-        require(stakeInfo[tokenId].owner == sender, "sender is not token owner");
         require(stakeInfo[tokenId].released == false, "token already unstaked");
+        require(stakeInfo[tokenId].owner == sender, "sender is not token owner");
         stakeInfo[tokenId].released = true;
         uint256 reward = (block.timestamp - stakeInfo[tokenId].startTime) * minimalReward;
         NFT(_nftAddress).safeTransferFrom(address(this), sender, tokenId);
