@@ -24,8 +24,8 @@ describe("NFT staking", function () {
 
     await stake.deployed();
 
-    await nft.setSaleAddress(sale.address);
-    await token.setStakeAddress(stake.address);
+    await nft.grantMinterRole(sale.address);
+    await token.grantMinterRole(stake.address);
   })
   describe("sale", function() {
     it ("deploy token and nft", async function() {
@@ -52,8 +52,8 @@ describe("NFT staking", function () {
 
   describe("minting", function() {
     it("minting only from certain contract address", async function() {
-    await expect(token.mintStakeReward(owner.address, 9999)).to.be.revertedWith("sender address is not stake contract address");
-    await expect(nft.mint(owner.address, 9999)).to.be.revertedWith("sender address is not sale contract address");
+    await expect(token.mintStakeReward(owner.address, 9999)).to.be.reverted;
+    await expect(nft.mint(owner.address, 9999)).to.be.reverted;
     });
   });
 
