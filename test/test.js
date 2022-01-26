@@ -1,11 +1,16 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+async function addTime(additionalTime) {
+  await network.provider.send("evm_increaseTime", [Number(additionalTime)])
+  await ethers.provider.send('evm_mine');
+}
+
+
 describe("NFT staking", function () {
 
   let Token, token, NFT, nft, Sale, sale, Stake, stake, owner, receiver;
   const tokenId = 12345;
-
 
   beforeEach(async () => {
     [owner, receiver] = await ethers.getSigners();
@@ -65,10 +70,13 @@ describe("NFT staking", function () {
     });
 
     it("correct staking", async function() {
+      let oldBalance = await token.balanceOf(owner.address);
+      let delta = 20;
       await nft.approve(stake.address, tokenId);
       await stake.stake(tokenId);
+      addTime(delta);
       await stake.unstake(tokenId);
-      expect(await token.balanceOf(owner.address)).to.equal(991);
+      expect(await token.balanceOf(owner.address)).to.equal(BigInt(oldBalance) + BigInt(delta));
     });
 
     it("double staking of nft with a same id", async function() {
@@ -81,13 +89,13 @@ describe("NFT staking", function () {
       await nft.approve(stake.address, tokenId);
       await stake.stake(tokenId);
       await stake.unstake(tokenId);
-      await expect(stake.unstake(tokenId)).to.be.revertedWith("token already unstaked");
+      await expect(stake.unstake(tokenId)).to.be.revertedWith("sender is not token owner or not staked");
     });
 
     it ("unstaking nft by a non-owner", async function() {
       await nft.approve(stake.address, tokenId);
       await stake.stake(tokenId);
-      await expect(stake.connect(receiver).unstake(tokenId)).to.be.revertedWith("sender is not token owner");
+      await expect(stake.connect(receiver).unstake(tokenId)).to.be.revertedWith("sender is not token owner or not staked");
     });
   
   });

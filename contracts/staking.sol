@@ -14,7 +14,7 @@ contract Stake is IERC721Receiver {
 
     mapping (uint256 => tokenInfo) stakeInfo;
 
-    uint256 private constant minimalReward = 1;
+    uint256 private constant rewardPerSecond = 1;
 
     address private _tokenAddress;
     address private _nftAddress; 
@@ -43,20 +43,17 @@ contract Stake is IERC721Receiver {
     }
 
     function _stake(address sender, uint256 tokenId) internal {
-        require(stakeInfo[tokenId].owner == address(0) || stakeInfo[tokenId].released == true, "token already staked");
+        require(stakeInfo[tokenId].owner == address(0), "token already staked");
         stakeInfo[tokenId].owner = sender;
         stakeInfo[tokenId].startTime = block.timestamp;
-        stakeInfo[tokenId].released = false;
-
         NFT(_nftAddress).safeTransferFrom(sender, address(this), tokenId);
     }
     
 
     function _unstake(address sender, uint256 tokenId) internal {
-        require(stakeInfo[tokenId].released == false, "token already unstaked");
-        require(stakeInfo[tokenId].owner == sender, "sender is not token owner");
-        stakeInfo[tokenId].released = true;
-        uint256 reward = (block.timestamp - stakeInfo[tokenId].startTime) * minimalReward;
+        require(stakeInfo[tokenId].owner == sender, "sender is not token owner or not staked");
+        stakeInfo[tokenId].owner = address(0);
+        uint256 reward = (block.timestamp - stakeInfo[tokenId].startTime) * rewardPerSecond;
         NFT(_nftAddress).safeTransferFrom(address(this), sender, tokenId);
         Token(_tokenAddress).mintStakeReward(sender, reward);
     }
